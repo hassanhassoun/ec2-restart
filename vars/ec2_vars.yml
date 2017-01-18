@@ -1,0 +1,13 @@
+region: us-east-2
+keypair: keypair-name
+group_tag: webserver
+subnet: [ subnet-xxxx ]
+zone: [ c ] 
+sgs:
+ - sg-XXXXXXXX
+ - sg-YYYYYYYY
+instance_type: t2.micro
+image: ami-NNNNNN
+elb: elb-name
+ec2_ip: EIP-Address
+elb_group_arn: arn:aws:elasticloadbalancing:us-east-2:XXXXXXXXX:targetgroup/web/xxxxxxxxxxx

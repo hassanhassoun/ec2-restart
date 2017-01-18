@@ -1,0 +1,84 @@
+- name: re-Create EC2 instances
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+   # Include defined variables from ec2_vars.yml
+   - include_vars:
+       file: ec2_vars.yml
+       name: ec2_vars
+
+   # Load AWS exisitng Group tagged instances for termination
+   - ec2_remote_facts:
+      region: '{{ ec2_vars.region }}'
+      filters:
+       "tag:Group": '{{ ec2_vars.group_tag }}'
+     register: info
+
+   # Terminate and cleanup existing instances ( within the same group )
+   - name: Terminate existing EC2 instances
+     ec2:
+        region: '{{ ec2_vars.region }}'
+        instance_ids: '{{ item.id }}'
+        wait: yes
+        state: absent
+     with_items: '{{ info.instances }}'
+
+   # Provision required instance(s)
+   - name: Provision instance 
+     ec2:
+         key_name: '{{ ec2_vars.keypair }}'
+         group_id: '{{ ec2_vars.sgs }}'
+         region: '{{ ec2_vars.region }}'
+         vpc_subnet_id: '{{ item.subnet }}'
+         instance_type: '{{ ec2_vars.instance_type }}'
+         image: '{{ ec2_vars.image }}'
+         wait: true
+         exact_count: 1
+         count_tag:
+            Name: '{{ ec2_vars.group_tag }}-{{ item.zone_suffix }}'
+         instance_tags:
+            Name: '{{ ec2_vars.group_tag }}-{{ item.zone_suffix }}'
+            Group: '{{ ec2_vars.group_tag }}'
+     register: ec2c
+     with_items:
+      - { subnet: '{{ ec2_vars.subnet[0] }}', zone_suffix: '{{ ec2_vars.zone[0] }}' }
+
+   # Need to keep the same IP address 
+   - name: associate existing elastic IP
+     ec2_eip:
+      region: '{{ ec2_vars.region }}'
+      ip: '{{ ec2_vars.ec2_ip }}'
+      device_id: "{{ ec2c.results[0].instances[0].id }}"
+
+   - name: Execute aws to register to existing ELBv2. Ansible boto2 current support is limited to earlier elb version.
+     shell: /usr/local/bin/aws elbv2 register-targets --target-group-arn '{{ ec2_vars.elb_group_arn }}' --targets Id="{{ ec2c.results[0].instances[0].id }}"
+
+   - name: Wait for SSH to come up
+     wait_for:
+      host: '{{ ec2_vars.ec2_ip }}'
+      port: 22
+      delay: 60
+      timeout: 320
+      state: started
+
+   - name: register EIP for next play
+     set_fact: ec2_instance_eip='{{ ec2_vars.ec2_ip }}'
+
+- name: Post install - Client asked for PasswordAuthentication !
+  hosts: "{{ hostvars['localhost']['ec2_instance_eip'] }}"
+  user: ec2-user
+  become: true
+  become_user: root
+  become_method: sudo
+  tasks:
+   - lineinfile: dest=/etc/ssh/sshd_config
+      regexp="^PasswordAuthentication"
+      line="PasswordAuthentication yes"
+      state=present
+     notify: Restart ssh
+
+  handlers:
+   - name: Restart ssh
+     service: name=sshd state=restarted
