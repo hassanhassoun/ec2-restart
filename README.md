@@ -16,3 +16,9 @@ command ( Until boto3 support is added to Ansible, and ELBv2 is fully supported 
 - SSH private keypair is available @ ~/.ssh/id_rsa ( or equivalent ). Required to run a post config on instance
 - Edit vars/ec2_vars.yml accordingly
 
+# Sample Run
+
+\$ansible-playbook ec2_setup.yml --extra-vars "varfile=/home/myhome/otherAZ_vars.yml 
+
+# Wish list
+- Support single playbook for rolling restarts across Availibility Zones

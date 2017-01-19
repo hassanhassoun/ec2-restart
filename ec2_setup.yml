@@ -6,7 +6,7 @@
   tasks:
    # Include defined variables from ec2_vars.yml
    - include_vars:
-       file: ec2_vars.yml
+       file: "{{ varfile | default ('ec2_vars.yml') }}"
        name: ec2_vars
 
    # Load AWS exisitng Group tagged instances for termination
