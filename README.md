@@ -12,7 +12,7 @@ command ( Until boto3 support is added to Ansible, and ELBv2 is fully supported 
 - Env vars AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are exported with required AWS access key
 - export ANSIBLE_HOST_KEY_CHECKING=False # Instance will keep the same EIP, host key checking is problematic
 - Defaulted to start a single instance per AZ. Ultimatly, we want to support multiple AZ, but without loosing
-  all instances at once.
+  all instances at once. Rolling restarts can be accomplished using different variables across multiple runs.
 - SSH private keypair is available @ ~/.ssh/id_rsa ( or equivalent ). Required to run a post config on instance
 - Edit vars/ec2_vars.yml accordingly
 
