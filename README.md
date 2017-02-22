@@ -6,14 +6,14 @@ the risk of delays introduced by DNS changes.
 
 Same goes for the ELB, we could dynamically recreate the ELB, but instead we want to keep the
 existing external IP address. We attach the newly created instance to the existing ELB, albeit using aws
-command ( Until boto3 support is added to Ansible, and ELBv2 is fully supported ). 
+command ( Until boto3 support is added to all hosts where this code is running )
 
 # Assumptions
 - Env vars AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are exported with required AWS access key
 - export ANSIBLE_HOST_KEY_CHECKING=False # Instance will keep the same EIP, host key checking is problematic
 - Defaulted to start a single instance per AZ. Ultimatly, we want to support multiple AZ, but without loosing
   all instances at once. Rolling restarts can be accomplished using different variables across multiple runs.
-- SSH private keypair is available @ ~/.ssh/id_rsa ( or equivalent ). Required to run a post config on instance
+- SSH private keypair is available @ ~/.ssh/id_rsa ( or equivalent ~/.ssh/config ). Required to run a post config on instance
 - Edit vars/ec2_vars.yml accordingly
 
 # Sample Run
